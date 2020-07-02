@@ -10,10 +10,12 @@ import UIKit
 
 class ViewController: UITableViewController {
     var petitions = [Petition]()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         let urlString : String
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Credits", style: .plain, target:self, action: #selector(showMessage))
+        
+        
         if navigationController?.tabBarItem.tag == 0 {
             urlString = "https://www.hackingwithswift.com/samples/petitions-1.json"
             
@@ -30,6 +32,11 @@ class ViewController: UITableViewController {
             }
         }
         showError() 
+    }
+    @objc func showMessage() {
+        let showCredits = UIAlertController(title: "This data comes from the We The People API of the Whitehouse.", message: nil, preferredStyle: .alert)
+        showCredits.addAction(UIAlertAction(title: "Close", style: .cancel))
+        present(showCredits, animated: true)
     }
     
     func showError() {
@@ -63,4 +70,3 @@ class ViewController: UITableViewController {
         navigationController?.pushViewController(vc, animated: true)
     }
 }
-
