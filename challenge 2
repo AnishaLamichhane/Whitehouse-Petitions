@@ -5,15 +5,22 @@
 //  Created by Anisha Lamichhane on 6/27/20.
 //  Copyright © 2020 Anisha Lamichhane. All rights reserved.
 //
+
 import UIKit
 
 class ViewController: UITableViewController {
     var petitions = [Petition]()
+    var filterPetitions = [Petition]()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         let urlString : String
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Credits", style: .plain, target:self, action: #selector(showMessage))
-        
+        let filterButton = UIBarButtonItem(barButtonSystemItem: .search, target: self, action: #selector(filterMessage))
+        let spacer = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: self, action: nil)
+        let refreshButton = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(refresh))
+        navigationItem.leftBarButtonItems = [filterButton, spacer, refreshButton]
+//        navigationController?.isToolbarHidden = false
         
         if navigationController?.tabBarItem.tag == 0 {
             urlString = "https://www.hackingwithswift.com/samples/petitions-1.json"
@@ -32,10 +39,35 @@ class ViewController: UITableViewController {
         }
         showError() 
     }
+    @objc func refresh() {
+        filterPetitions = petitions
+        tableView.reloadData()
+           
+       }
+    @objc func filterMessage() {
+       let ac = UIAlertController(title: "Search Petitions", message: nil, preferredStyle: .alert)
+       ac.addTextField()
+       
+       let searchAction = UIAlertAction(title: "Search", style: .default) {
+           [weak self, weak ac] _ in
+           guard let answer = ac?.textFields?[0].text else { return }
+           self?.filterPetitionContaining(answer)
+       }
+       ac.addAction(searchAction)
+       present(ac, animated: true)
+    }
+    func filterPetitionContaining(_ answer: String) {
+       filterPetitions = petitions.filter {
+        $0.title.localizedCaseInsensitiveContains(answer) || $0.body.localizedCaseInsensitiveContains(answer)
+        }
+        tableView.reloadData()
+
+        }
+        
     @objc func showMessage() {
-        let showCredits = UIAlertController(title: "This data comes from the We The People API of the Whitehouse.", message: nil, preferredStyle: .alert)
-        showCredits.addAction(UIAlertAction(title: "Close", style: .cancel))
-        present(showCredits, animated: true)
+       let showCredits = UIAlertController(title: "Data Info:", message: "This data comes from the We The People API of the Whitehouse.", preferredStyle: .alert)
+       showCredits.addAction(UIAlertAction(title: "Close", style: .cancel))
+       present(showCredits, animated: true)
     }
     
     func showError() {
@@ -43,29 +75,33 @@ class ViewController: UITableViewController {
         ac.addAction(UIAlertAction(title: "ok", style: .default))
         present(ac, animated: true)
     }
+    
     func parse(json: Data) {
         let decoder = JSONDecoder()
         
         if let jsonPetitions = try?decoder.decode(Petitions.self, from: json) {
             petitions = jsonPetitions.results
+            filterPetitions = petitions
             tableView.reloadData()
         }
         
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return petitions.count
+        return filterPetitions.count
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        let petition = petitions[indexPath.row]
+        let petition = filterPetitions[indexPath.row]
         cell.textLabel?.text = petition.title
         cell.detailTextLabel?.text = petition.body
         return cell 
     }
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let vc = DetailViewController()
-        vc.detailItem = petitions[indexPath.row]
+        vc.detailItem = filterPetitions[indexPath.row]
         navigationController?.pushViewController(vc, animated: true)
     }
 }
+
+
